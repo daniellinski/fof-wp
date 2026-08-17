@@ -24,7 +24,7 @@ $fof_quiz_update_checker = PucFactory::buildUpdateChecker(
 $fof_quiz_update_checker->setBranch('main');
 
 final class FOF_Quiz_Plugin {
-    const VERSION = '1.4.5';
+    const VERSION = '1.4.6';
     const POST_TYPE = 'fof_quiz';
     const SHORTCODE = 'feit_of_fabel_quiz';
     const BLOCK_NAME = 'feit-of-fabel-quiz';
