@@ -10,8 +10,8 @@ Reusable ACF-managed 'feit of fabel' quizzes with a Gutenberg block, shortcode, 
 
 == Updates ==
 
-Updates are checked from the GitHub repository at https://github.com/daniellinski/fof-wp.
-To publish an update, increase the plugin version in `feit-of-fabel-quiz.php` and create a GitHub release or tag with the same version number.
+The plugin checks https://github.com/daniellinski/fof-wp for new versions and shows updates in WordPress when available.
+To publish one, increase the version in `feit-of-fabel-quiz.php` and create a matching GitHub release or tag.
 
 == Usage ==
 
