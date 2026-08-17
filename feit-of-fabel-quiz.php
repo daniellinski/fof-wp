@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Feit of Fabel-Quiz
  * Description: Create ACF-managed Feit of Fabel-quizzes.
- * Version: 1.4.5
+ * Version: 1.4.6
  * Update URI: https://github.com/daniellinski/fof-wp
  * Author: Daniël Dols, Trimbos Instituut
  * Text Domain: feit-of-fabel-quiz
