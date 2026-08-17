@@ -3,6 +3,7 @@
  * Plugin Name: Feit of Fabel-Quiz
  * Description: Create ACF-managed Feit of Fabel-quizzes.
  * Version: 1.4.5
+ * Update URI: https://github.com/daniellinski/fof-wp
  * Author: Daniël Dols, Trimbos Instituut
  * Text Domain: feit-of-fabel-quiz
  * Requires at least: 6.0
@@ -10,6 +11,17 @@
  */
 
 defined('ABSPATH') || exit;
+
+require_once __DIR__ . '/plugin-update-checker/plugin-update-checker.php';
+
+use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
+
+$fof_quiz_update_checker = PucFactory::buildUpdateChecker(
+    'https://github.com/daniellinski/fof-wp',
+    __FILE__,
+    'feit-of-fabel-quiz'
+);
+$fof_quiz_update_checker->setBranch('main');
 
 final class FOF_Quiz_Plugin {
     const VERSION = '1.4.5';

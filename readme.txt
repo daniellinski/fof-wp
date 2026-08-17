@@ -8,6 +8,11 @@ Reusable ACF-managed 'feit of fabel' quizzes with a Gutenberg block, shortcode, 
 * Advanced Custom Fields Pro (the repeater field and ACF Gutenberg block are used)
 * Bootstrap 5 (the plugin uses Bootstrap components, grid, and utilities for its layout)
 
+== Updates ==
+
+Updates are checked from the GitHub repository at https://github.com/daniellinski/fof-wp.
+To publish an update, increase the plugin version in `feit-of-fabel-quiz.php` and create a GitHub release or tag with the same version number.
+
 == Usage ==
 
 1. Activate the plugin and ACF Pro.
