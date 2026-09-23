@@ -73,10 +73,7 @@ final class FOF_Quiz_CSV_Importer {
                         <tr>
                             <th scope="row"><label for="fof-quiz-csv"><?php esc_html_e('CSV-bestand', 'feit-of-fabel-quiz'); ?></label></th>
                             <td>
-                                <input type="file" id="fof-quiz-csv" name="quiz_csv" accept=".csv,text/csv" required>
-                                <p class="description">
-                                    <?php esc_html_e('Gebruik UTF-8 CSV met komma’s als scheidingsteken. Maximaal 1.000 vragen en 2 MB.', 'feit-of-fabel-quiz'); ?>
-                                </p>
+                                <input type="file" id="fof-quiz-csv" name="quiz_csv" accept=".csv" required>
                             </td>
                         </tr>
                     </table>
@@ -136,6 +133,7 @@ final class FOF_Quiz_CSV_Importer {
             $this->redirect_with_result([
                 'type' => 'error',
                 'messages' => $parsed['errors'],
+                'debug' => $parsed['debug'],
             ]);
         }
 
@@ -172,30 +170,40 @@ final class FOF_Quiz_CSV_Importer {
     private function parse_csv($path) {
         $rows = [];
         $errors = [];
+        $debug = [];
         $handle = fopen($path, 'rb');
 
         if (!$handle) {
             return [
                 'rows' => [],
                 'errors' => [__('Het CSV-bestand kon niet worden gelezen.', 'feit-of-fabel-quiz')],
+                'debug' => [],
             ];
         }
 
-        $header = fgetcsv($handle, 0, ',');
-        if (!is_array($header)) {
+        $raw_header = fgetcsv($handle, 0, ',');
+        if (!is_array($raw_header)) {
             fclose($handle);
             return [
                 'rows' => [],
                 'errors' => [__('Het CSV-bestand is leeg.', 'feit-of-fabel-quiz')],
+                'debug' => [],
             ];
         }
 
-        $header = array_map([$this, 'normalize_header'], $header);
+        $header = array_map([$this, 'normalize_header'], $raw_header);
+        $debug[] = sprintf(
+            /* translators: %s: parsed CSV header as JSON. */
+            __('Gelezen kopregel: %s', 'feit-of-fabel-quiz'),
+            $this->format_debug_value($raw_header)
+        );
+
         if ($header !== ['question', 'correct_answer', 'explanation']) {
             fclose($handle);
             return [
                 'rows' => [],
                 'errors' => [__('De CSV-kopregel moet exact zijn: question,correct_answer,explanation.', 'feit-of-fabel-quiz')],
+                'debug' => $debug,
             ];
         }
 
@@ -213,6 +221,12 @@ final class FOF_Quiz_CSV_Importer {
                     __('Regel %d moet precies drie kolommen bevatten.', 'feit-of-fabel-quiz'),
                     $line_number
                 );
+                $debug[] = sprintf(
+                    /* translators: 1: CSV line number, 2: parsed CSV fields as JSON. */
+                    __('Regel %1$d ingelezen als: %2$s', 'feit-of-fabel-quiz'),
+                    $line_number,
+                    $this->format_debug_value($fields)
+                );
                 continue;
             }
 
@@ -228,8 +242,10 @@ final class FOF_Quiz_CSV_Importer {
             $question = sanitize_textarea_field((string) $fields[0]);
             $answer = $this->normalize_answer($fields[1]);
             $explanation = trim((string) $fields[2]);
+            $row_has_error = false;
 
             if ($question === '') {
+                $row_has_error = true;
                 $errors[] = sprintf(
                     /* translators: %d: CSV line number. */
                     __('Regel %d bevat geen vraag.', 'feit-of-fabel-quiz'),
@@ -238,10 +254,21 @@ final class FOF_Quiz_CSV_Importer {
             }
 
             if ($answer === null) {
+                $row_has_error = true;
                 $errors[] = sprintf(
-                    /* translators: %d: CSV line number. */
-                    __('Regel %d bevat geen geldig antwoord. Gebruik true of false.', 'feit-of-fabel-quiz'),
-                    $line_number
+                    /* translators: 1: CSV line number, 2: parsed answer value. */
+                    __('Regel %1$d bevat geen geldig antwoord. Gebruik true of false. Gelezen waarde: %2$s.', 'feit-of-fabel-quiz'),
+                    $line_number,
+                    $this->format_debug_value($fields[1])
+                );
+            }
+
+            if ($row_has_error) {
+                $debug[] = sprintf(
+                    /* translators: 1: CSV line number, 2: parsed CSV fields as JSON. */
+                    __('Regel %1$d ingelezen als: %2$s', 'feit-of-fabel-quiz'),
+                    $line_number,
+                    $this->format_debug_value($fields)
                 );
             }
 
@@ -265,6 +292,7 @@ final class FOF_Quiz_CSV_Importer {
         return [
             'rows' => $rows,
             'errors' => $errors,
+            'debug' => $debug,
         ];
     }
 
@@ -300,6 +328,12 @@ final class FOF_Quiz_CSV_Importer {
         }
 
         return true;
+    }
+
+    private function format_debug_value($value) {
+        $encoded = wp_json_encode($value);
+
+        return false === $encoded ? '[ongeldige UTF-8-waarde]' : $encoded;
     }
 
     private function render_result($result) {
@@ -341,6 +375,12 @@ final class FOF_Quiz_CSV_Importer {
                     <li><?php echo esc_html($message); ?></li>
                 <?php endforeach; ?>
             </ul>
+            <?php if (!empty($result['debug']) && is_array($result['debug'])) : ?>
+                <details>
+                    <summary><?php esc_html_e('Debuginformatie tonen', 'feit-of-fabel-quiz'); ?></summary>
+                    <pre style="max-width: 100%; overflow: auto; white-space: pre-wrap;"><?php echo esc_html(implode("\n", $result['debug'])); ?></pre>
+                </details>
+            <?php endif; ?>
         </div>
         <?php
     }
