@@ -13,6 +13,7 @@
 defined('ABSPATH') || exit;
 
 require_once __DIR__ . '/plugin-update-checker/plugin-update-checker.php';
+require_once __DIR__ . '/includes/class-fof-quiz-csv-importer.php';
 
 use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 
@@ -630,3 +631,4 @@ final class FOF_Quiz_Plugin {
 }
 
 new FOF_Quiz_Plugin();
+new FOF_Quiz_CSV_Importer(FOF_Quiz_Plugin::POST_TYPE, 'field_fof_questions');

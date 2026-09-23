@@ -16,7 +16,7 @@ To publish one, increase the version in `feit-of-fabel-quiz.php` and create a ma
 == Usage ==
 
 1. Activate the plugin and ACF Pro.
-2. Go to Quizzes > Nieuwe quiz and add the questions.
+2. Go to Quizzes > Import CSV to create a new draft quiz from a CSV file, or use Quizzes > Nieuwe quiz to add questions manually.
 3. Add the “Fact of fabel quiz” Gutenberg block and select the quiz.
 4. Or use `[fact_or_fiction_quiz id="123"]`.
 
