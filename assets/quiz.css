@@ -18,7 +18,20 @@
 
 .fof-question,
 .fof-quiz__result {
-    scroll-margin-top: 0.5rem;
+    scroll-margin-top: 6rem; /* Clear sticky site headers. */
+}
+
+.fof-progress {
+    background-color: rgba(0, 0, 0, 0.08);
+    border-radius: 999px;
+    height: 0.375rem;
+    overflow: hidden;
+}
+
+.fof-progress__bar {
+    background-color: var(--bs-primary, var(--fof-feit));
+    border-radius: inherit;
+    height: 100%;
 }
 
 .fof-question__media,
@@ -55,6 +68,26 @@
     --bs-btn-hover-bg: var(--fof-fabel-hover);
 }
 
+/* Next/result buttons use the theme's darker brand colour (set per site in the multisite). */
+.fof-quiz [data-fof-next] {
+    --fof-next-bg: var(--bs-dark-primary, var(--bs-primary));
+    --fof-next-current: var(--fof-next-bg);
+}
+
+.fof-quiz [data-fof-next]:hover,
+.fof-quiz [data-fof-next]:focus-visible,
+.fof-quiz [data-fof-next]:active {
+    --fof-next-current: color-mix(in srgb, var(--fof-next-bg) 85%, #000);
+}
+
+/* Themes may force .btn-primary colours with an ID selector and !important;
+   :is(#body, html) matches that specificity and works on any theme. */
+:is(#body, html) .fof-quiz [data-fof-next] {
+    background-color: var(--fof-next-current) !important;
+    border-color: var(--fof-next-current) !important;
+    color: #fff !important;
+}
+
 .fof-question__answer {
     font-weight: 600 !important;
     font-size: 1.125rem !important;
@@ -77,8 +110,21 @@
     background-color: var(--fof-feit-light);
 }
 
-.fof-question.is-fabel .fof-question__feedback {
+.fof-question.is-incorrect .fof-question__feedback {
     background-color: var(--fof-fabel-light);
+}
+
+.fof-question__feedback-statement {
+    background-color: rgba(255, 255, 255, 0.65);
+}
+
+.fof-question__feedback-statement blockquote {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.fof-question__feedback-choice {
+    opacity: 0.75;
 }
 
 .fof-question__feedback-icon {
@@ -121,48 +167,76 @@
     display: block;
 }
 
-.fof-question.is-fabel .fof-question__feedback-icon {
+.fof-question.is-incorrect .fof-question__feedback-icon {
     background-color: var(--fof-fabel);
     border-color: var(--fof-fabel) !important;
 }
 
 .fof-question__feedback-title {
     color: var(--fof-feit) !important;
-    margin-top: 26px !important;
 }
 
-.fof-question.is-fabel .fof-question__feedback-title {
+/* Themes may force paragraph margins with !important; keep the title centred on the icon. */
+.fof-quiz .fof-question__feedback-title {
+    margin: 0 !important;
+}
+
+.fof-question.is-incorrect .fof-question__feedback-title {
     color: var(--fof-fabel) !important;
 }
 
-.fof-question__scroll-indicator {
-    --bs-btn-padding-x: 0;
-    --bs-btn-padding-y: 0;
-    aspect-ratio: 1;
-    height: 3rem;
-    min-height: 0 !important; /* Themes may set a min-height on .btn. */
-    width: 3rem;
-    z-index: 3;
+.fof-quiz__review {
+    max-width: 40rem;
 }
 
-.fof-question__feedback-scroll {
-    overflow-anchor: none;
-    overscroll-behavior: contain;
-    scroll-behavior: auto;
+.fof-quiz__review summary {
+    --fof-review-color: var(--bs-dark-primary, var(--bs-primary));
+    cursor: pointer;
+    list-style: none;
 }
 
-.fof-question__feedback.has-overflow .fof-question__feedback-scroll {
-    padding-bottom: 5rem !important;
+/* Outline counterpart of the next button: one colour for border, text and chevron. */
+:is(#body, html) .fof-quiz .fof-quiz__review summary {
+    background-color: transparent !important;
+    border: 2px solid var(--fof-review-color) !important;
+    color: var(--fof-review-color) !important;
 }
 
-.fof-question__scroll-indicator .bi {
-    animation: fof-scroll-hint 1.4s ease-in-out infinite;
+:is(#body, html) .fof-quiz .fof-quiz__review summary:hover,
+:is(#body, html) .fof-quiz .fof-quiz__review summary:focus-visible {
+    background-color: var(--fof-review-color) !important;
+    color: #fff !important;
+}
+
+.fof-quiz__review summary::-webkit-details-marker {
+    display: none;
+}
+
+.fof-quiz__review-chevron {
     line-height: 1;
+    transition: transform 200ms ease;
 }
 
-.fof-question__scroll-indicator .bi::before {
-    display: block;
-    vertical-align: 0;
+.fof-quiz__review[open] .fof-quiz__review-chevron {
+    transform: rotate(180deg);
+}
+
+.fof-review__item + .fof-review__item {
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.fof-review__icon {
+    background-color: var(--fof-feit);
+    height: 2rem;
+    width: 2rem;
+}
+
+.fof-review__item.is-incorrect .fof-review__icon {
+    background-color: var(--fof-fabel);
+}
+
+.fof-review__answer {
+    opacity: 0.75;
 }
 
 .fof-question.is-active,
@@ -191,11 +265,6 @@
 @keyframes fof-reveal {
     from { opacity: 0; transform: translateY(-0.625rem); }
     to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fof-scroll-hint {
-    0%, 100% { transform: translateY(-0.125rem); }
-    50% { transform: translateY(0.2rem); }
 }
 
 @media (max-width: 991.98px) {

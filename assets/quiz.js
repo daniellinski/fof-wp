@@ -2,6 +2,17 @@
     'use strict';
 
     var initialized = new WeakSet();
+    var settings = window.fofQuizSettings || {};
+    var i18n = Object.assign({
+        correctTitle: 'Goed! {verdict}',
+        incorrectTitle: 'Helaas! {verdict}',
+        verdictTrue: 'Dit is waar.',
+        verdictFalse: 'Dit is niet waar.',
+        youChose: 'Jij koos: {answer}',
+        correctAnswer: 'Juiste antwoord: {answer}',
+        answeredCorrectly: 'Goed beantwoord',
+        answeredIncorrectly: 'Fout beantwoord'
+    }, settings.i18n || {});
 
     function template(text, values) {
         return Object.keys(values).reduce(function (result, key) {
@@ -14,6 +25,9 @@
         this.questions = Array.prototype.slice.call(root.querySelectorAll('[data-fof-question]'));
         this.result = root.querySelector('[data-fof-result]');
         this.scoreNode = root.querySelector('[data-fof-score]');
+        this.resultTitle = root.querySelector('[data-fof-result-title]');
+        this.reviewList = root.querySelector('[data-fof-review]');
+        this.answers = [];
         this.index = 0;
         this.score = 0;
         this.started = false;
@@ -40,17 +54,6 @@
                     quiz.next();
                 });
             }
-
-            var feedbackScroller = question.querySelector('[data-fof-feedback-scroll]');
-            var feedbackScrollIndicator = question.querySelector('[data-fof-feedback-scroll-indicator]');
-            if (feedbackScroller && feedbackScrollIndicator) {
-                feedbackScroller.addEventListener('scroll', function () {
-                    quiz.updateFeedbackOverflowIndicator(question);
-                }, { passive: true });
-                feedbackScrollIndicator.addEventListener('click', function () {
-                    quiz.scrollFeedbackDown(question);
-                });
-            }
         });
 
         this.root.querySelectorAll('[data-fof-share]').forEach(function (button) {
@@ -58,17 +61,6 @@
                 quiz.share(button.getAttribute('data-fof-share'));
             });
         });
-
-        this.handleFeedbackResize = function () {
-            quiz.questions.forEach(function (question) {
-                quiz.refreshFeedbackOverflow(question);
-            });
-        };
-        window.addEventListener('resize', this.handleFeedbackResize);
-
-        if (document.fonts && document.fonts.ready) {
-            document.fonts.ready.then(this.handleFeedbackResize);
-        }
     };
 
     Quiz.prototype.answer = function (question, selected) {
@@ -118,41 +110,58 @@
         this.emit('question_answered', eventDetails);
         this.emit(isCorrect ? 'correct_answer' : 'incorrect_answer', eventDetails);
 
+        var trueLabel = question.querySelector('[data-fof-answer="1"]');
+        var falseLabel = question.querySelector('[data-fof-answer="0"]');
+        var statement = question.querySelector('[data-fof-statement]');
+        this.answers.push({
+            statement: statement ? statement.textContent.trim() : '',
+            isCorrect: isCorrect,
+            correctLabel: (correctAnswer === '1' ? trueLabel : falseLabel).textContent.trim()
+        });
+
         var feedback = question.querySelector('[data-fof-feedback]');
         var feedbackIcon = question.querySelector('[data-fof-feedback-icon]');
         var feedbackTitle = question.querySelector('[data-fof-feedback-title]');
         var feedbackChoice = question.querySelector('[data-fof-feedback-choice]');
+        var body = question.querySelector('[data-fof-body]');
         if (feedbackIcon) {
-            feedbackIcon.setAttribute('data-icon', correctAnswer === '1' ? 'check' : 'cross');
+            feedbackIcon.setAttribute('data-icon', isCorrect ? 'check' : 'cross');
         }
         if (feedbackTitle) {
-            feedbackTitle.textContent = correctAnswer === '1' ? 'Dit is waar!' : 'Dit is niet waar!';
+            feedbackTitle.textContent = template(isCorrect ? i18n.correctTitle : i18n.incorrectTitle, {
+                verdict: correctAnswer === '1' ? i18n.verdictTrue : i18n.verdictFalse
+            });
         }
         if (feedbackChoice) {
-            feedbackChoice.classList.remove('btn-success', 'btn-danger');
-            feedbackChoice.classList.add(chosen === '1' ? 'btn-success' : 'btn-danger');
-            feedbackChoice.textContent = 'Jij koos: ' + selected.textContent.trim();
+            // "Jij koos: <strong>Waar</strong>", built as nodes so labels stay plain text.
+            var parts = i18n.youChose.split('{answer}');
+            var answerNode = document.createElement('strong');
+            answerNode.textContent = selected.textContent.trim();
+            feedbackChoice.textContent = '';
+            feedbackChoice.appendChild(document.createTextNode(parts[0] || ''));
+            feedbackChoice.appendChild(answerNode);
+            feedbackChoice.appendChild(document.createTextNode(parts.slice(1).join('{answer}')));
         }
         if (feedback) {
-            var quiz = this;
-            var feedbackScroller = feedback.querySelector('[data-fof-feedback-scroll]');
-            if (feedbackScroller) {
-                feedbackScroller.scrollTop = 0;
+            // The feedback replaces the question in the card; keep at least the
+            // question's height so the card only grows, never jumps smaller.
+            if (body) {
+                feedback.style.minHeight = body.offsetHeight + 'px';
+                body.hidden = true;
             }
             feedback.hidden = false;
-            this.refreshFeedbackOverflow(question);
-            if (feedbackScroller) {
-                window.requestAnimationFrame(function () {
-                    feedbackScroller.scrollTop = 0;
-                });
-            }
-            window.setTimeout(function () {
-                if (feedbackScroller) {
-                    feedbackScroller.scrollTop = 0;
-                }
-                quiz.refreshFeedbackOverflow(question);
-            }, 350);
+            this.revealTop(question);
         }
+    };
+
+    Quiz.prototype.revealTop = function (element) {
+        var offset = parseFloat(window.getComputedStyle(element).scrollMarginTop) || 0;
+        if (element.getBoundingClientRect().top >= offset) {
+            return;
+        }
+
+        var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        element.scrollIntoView({ block: 'start', behavior: reducedMotion ? 'auto' : 'smooth' });
     };
 
     Quiz.prototype.next = function () {
@@ -169,6 +178,7 @@
             var nextQuestion = this.questions[this.index];
             nextQuestion.hidden = false;
             nextQuestion.classList.add('is-active');
+            this.revealTop(nextQuestion);
             return;
         }
 
@@ -184,63 +194,57 @@
         if (this.scoreNode) {
             this.scoreNode.textContent = template(this.root.getAttribute('data-score-template'), values);
         }
+        if (this.resultTitle) {
+            var ratio = this.total ? this.score / this.total : 0;
+            var band = ratio >= 0.8 ? 'high' : (ratio >= 0.5 ? 'mid' : 'low');
+            var heading = this.root.getAttribute('data-result-heading-' + band);
+            if (heading) {
+                this.resultTitle.textContent = heading;
+            }
+        }
+        this.renderReview();
         if (this.result) {
             this.result.hidden = false;
+            this.revealTop(this.result);
         }
 
         this.emit('quiz_completed', this.details({ score: this.score }));
         this.emit('score_achieved', this.details({ score: this.score }));
     };
 
-    Quiz.prototype.refreshFeedbackOverflow = function (question) {
-        var feedback = question.querySelector('[data-fof-feedback]');
-        var scroller = question.querySelector('[data-fof-feedback-scroll]');
-        var indicator = question.querySelector('[data-fof-feedback-scroll-indicator]');
-
-        if (!feedback || !scroller || !indicator || feedback.hidden) {
-            if (indicator) {
-                indicator.hidden = true;
-            }
+    Quiz.prototype.renderReview = function () {
+        if (!this.reviewList) {
             return;
         }
 
-        feedback.classList.remove('has-overflow');
-        var hasOverflow = scroller.scrollHeight > scroller.clientHeight + 2;
-        feedback.classList.toggle('has-overflow', hasOverflow);
+        var list = this.reviewList;
+        list.textContent = '';
+        this.answers.forEach(function (answer) {
+            var item = document.createElement('li');
+            item.className = 'fof-review__item d-flex gap-3 py-3' + (answer.isCorrect ? ' is-correct' : ' is-incorrect');
 
-        if (!hasOverflow) {
-            scroller.scrollTop = 0;
-        }
-        this.updateFeedbackOverflowIndicator(question);
-    };
+            var icon = document.createElement('span');
+            icon.className = 'fof-review__icon d-flex align-items-center justify-content-center rounded-circle text-white flex-shrink-0';
+            icon.innerHTML = '<i class="bi ' + (answer.isCorrect ? 'bi-check-lg' : 'bi-x-lg') + '" aria-hidden="true"></i>';
 
-    Quiz.prototype.updateFeedbackOverflowIndicator = function (question) {
-        var feedback = question.querySelector('[data-fof-feedback]');
-        var scroller = question.querySelector('[data-fof-feedback-scroll]');
-        var indicator = question.querySelector('[data-fof-feedback-scroll-indicator]');
+            var status = document.createElement('span');
+            status.className = 'visually-hidden';
+            status.textContent = (answer.isCorrect ? i18n.answeredCorrectly : i18n.answeredIncorrectly) + ': ';
 
-        if (!feedback || !scroller || !indicator || feedback.hidden) {
-            if (indicator) {
-                indicator.hidden = true;
-            }
-            return;
-        }
+            var text = document.createElement('div');
+            var statement = document.createElement('p');
+            statement.className = 'fw-semibold mb-1';
+            statement.textContent = answer.statement;
+            var correct = document.createElement('p');
+            correct.className = 'fof-review__answer mb-0';
+            correct.textContent = template(i18n.correctAnswer, { answer: answer.correctLabel });
+            text.appendChild(status);
+            text.appendChild(statement);
+            text.appendChild(correct);
 
-        var hasOverflow = feedback.classList.contains('has-overflow');
-        var hasContentBelow = scroller.scrollTop + scroller.clientHeight < scroller.scrollHeight - 8;
-        indicator.hidden = !(hasOverflow && hasContentBelow);
-    };
-
-    Quiz.prototype.scrollFeedbackDown = function (question) {
-        var scroller = question.querySelector('[data-fof-feedback-scroll]');
-        if (!scroller) {
-            return;
-        }
-
-        var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        scroller.scrollBy({
-            top: Math.max(140, scroller.clientHeight * 0.55),
-            behavior: reducedMotion ? 'auto' : 'smooth'
+            item.appendChild(icon);
+            item.appendChild(text);
+            list.appendChild(item);
         });
     };
 

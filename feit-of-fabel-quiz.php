@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Feit of Fabel-Quiz
  * Description: Create ACF-managed Feit of Fabel-quizzes.
- * Version: 1.5.3
+ * Version: 1.6.0
  * Update URI: https://github.com/daniellinski/fof-wp
  * Author: Daniël Dols, Trimbos Instituut
  * Text Domain: feit-of-fabel-quiz
@@ -25,7 +25,7 @@ $fof_quiz_update_checker = PucFactory::buildUpdateChecker(
 $fof_quiz_update_checker->setBranch('main');
 
 final class FOF_Quiz_Plugin {
-    const VERSION = '1.5.3';
+    const VERSION = '1.6.0';
     const POST_TYPE = 'fof_quiz';
     const SHORTCODE = 'feit_of_fabel_quiz';
     const BLOCK_NAME = 'feit-of-fabel-quiz';
@@ -112,6 +112,16 @@ final class FOF_Quiz_Plugin {
 
         wp_localize_script('fof-quiz', 'fofQuizSettings', [
             'dataLayer' => (bool) apply_filters('fof_quiz_enable_data_layer', false),
+            'i18n' => [
+                'correctTitle' => __('Goed! {verdict}', 'feit-of-fabel-quiz'),
+                'incorrectTitle' => __('Helaas! {verdict}', 'feit-of-fabel-quiz'),
+                'verdictTrue' => __('Dit is waar.', 'feit-of-fabel-quiz'),
+                'verdictFalse' => __('Dit is niet waar.', 'feit-of-fabel-quiz'),
+                'youChose' => __('Jij koos: {answer}', 'feit-of-fabel-quiz'),
+                'correctAnswer' => __('Juiste antwoord: {answer}', 'feit-of-fabel-quiz'),
+                'answeredCorrectly' => __('Goed beantwoord', 'feit-of-fabel-quiz'),
+                'answeredIncorrectly' => __('Fout beantwoord', 'feit-of-fabel-quiz'),
+            ],
         ]);
 
         // Ensure assets are printed in the document head/footer for normal post content.
@@ -296,11 +306,27 @@ final class FOF_Quiz_Plugin {
                 ],
                 [
                     'key' => 'field_fof_result_heading',
-                    'label' => __('Resultaattitel', 'feit-of-fabel-quiz'),
+                    'label' => __('Resultaattitel (80% of meer goed)', 'feit-of-fabel-quiz'),
                     'name' => 'fof_result_heading',
                     'type' => 'text',
                     'default_value' => 'Goed gedaan! 🎉',
-                    'wrapper' => ['width' => '50'],
+                    'wrapper' => ['width' => '33'],
+                ],
+                [
+                    'key' => 'field_fof_result_heading_mid',
+                    'label' => __('Resultaattitel (50-79% goed)', 'feit-of-fabel-quiz'),
+                    'name' => 'fof_result_heading_mid',
+                    'type' => 'text',
+                    'default_value' => 'Niet slecht!',
+                    'wrapper' => ['width' => '33'],
+                ],
+                [
+                    'key' => 'field_fof_result_heading_low',
+                    'label' => __('Resultaattitel (minder dan 50% goed)', 'feit-of-fabel-quiz'),
+                    'name' => 'fof_result_heading_low',
+                    'type' => 'text',
+                    'default_value' => 'Daar valt nog wat te leren!',
+                    'wrapper' => ['width' => '34'],
                 ],
                 [
                     'key' => 'field_fof_score_text',
@@ -463,6 +489,9 @@ final class FOF_Quiz_Plugin {
                 data-quiz-title="<?php echo esc_attr($title); ?>"
                 data-score-template="<?php echo esc_attr($settings['score_text']); ?>"
                 data-share-template="<?php echo esc_attr($settings['share_text']); ?>"
+                data-result-heading-high="<?php echo esc_attr($settings['result_heading']); ?>"
+                data-result-heading-mid="<?php echo esc_attr($settings['result_heading_mid']); ?>"
+                data-result-heading-low="<?php echo esc_attr($settings['result_heading_low']); ?>"
             >
                 <?php if ($show_intro) : ?>
                     <header class="fof-quiz__intro text-center mx-auto mb-5">
@@ -481,8 +510,15 @@ final class FOF_Quiz_Plugin {
 
                 <section class="fof-quiz__result card border-0 rounded-5 shadow text-center p-4 p-sm-5" data-fof-result hidden aria-live="polite" aria-labelledby="<?php echo esc_attr($instance_id); ?>-result-title">
                     <div class="mx-auto py-lg-3 w-100">
-                        <h2 id="<?php echo esc_attr($instance_id); ?>-result-title" class="fof-quiz__result-title display-6 fw-bold lh-sm pt-0 mb-4" tabindex="-1"><?php echo esc_html($settings['result_heading']); ?></h2>
-                        <p class="fs-4 lh-base mb-5" data-fof-score></p>
+                        <h2 id="<?php echo esc_attr($instance_id); ?>-result-title" class="fof-quiz__result-title display-6 fw-bold lh-sm pt-0 mb-4" tabindex="-1" data-fof-result-title><?php echo esc_html($settings['result_heading']); ?></h2>
+                        <p class="fs-4 lh-base mb-4" data-fof-score></p>
+                        <details class="fof-quiz__review mx-auto mb-5">
+                            <summary class="btn rounded-pill py-2 px-4 d-inline-flex align-items-center gap-2">
+                                <span><?php esc_html_e('Bekijk je antwoorden', 'feit-of-fabel-quiz'); ?></span>
+                                <i class="bi bi-chevron-down fof-quiz__review-chevron" aria-hidden="true"></i>
+                            </summary>
+                            <ol class="list-unstyled text-start mt-4 mb-0" data-fof-review></ol>
+                        </details>
                         <p class="fs-5 fw-semibold lh-base mb-3"><?php esc_html_e('Deel je resultaat', 'feit-of-fabel-quiz'); ?></p>
                         <div class="row g-3 justify-content-center">
                             <div class="col-sm-5 d-grid">
@@ -561,7 +597,7 @@ final class FOF_Quiz_Plugin {
 
         <article class="fof-question<?php echo $index === 0 ? ' is-active' : ''; ?>" data-fof-question data-index="<?php echo esc_attr((string) $number); ?>" data-correct="<?php echo esc_attr($correct_answer); ?>"<?php echo $index === 0 ? '' : ' hidden'; ?>>
             <div class="card border-0 rounded-5 shadow overflow-hidden position-relative">
-                <div class="row g-0 align-items-stretch">
+                <div class="row g-0 align-items-stretch" data-fof-body>
                     <?php if ($image_id) : ?>
                         <div class="col-lg-6 fof-question__media">
                             <?php echo wp_get_attachment_image($image_id, $image_size, false, [
@@ -573,6 +609,9 @@ final class FOF_Quiz_Plugin {
                     <?php endif; ?>
                     <div class="<?php echo $image_id ? 'col-lg-6' : 'col-12'; ?> fof-question__content d-flex flex-column justify-content-between p-4 p-lg-5">
                         <div>
+                            <div class="fof-progress mb-3" role="progressbar" aria-label="<?php esc_attr_e('Voortgang', 'feit-of-fabel-quiz'); ?>" aria-valuemin="1" aria-valuemax="<?php echo esc_attr((string) $total); ?>" aria-valuenow="<?php echo esc_attr((string) $number); ?>">
+                                <div class="fof-progress__bar" style="width: <?php echo esc_attr((string) round($number / max(1, (int) $total) * 100, 2)); ?>%"></div>
+                            </div>
                             <p class="fs-5 lh-base mb-0">
                                 <?php
                                 printf(
@@ -582,13 +621,14 @@ final class FOF_Quiz_Plugin {
                                 );
                                 ?>
                             </p>
-                            <h2 class="fs-2 fw-bold lh-sm pt-0 mt-4 mb-5"><?php echo nl2br(esc_html($question_text)); ?></h2>
+                            <h2 class="fs-2 fw-bold lh-sm pt-0 mt-4 mb-5" data-fof-statement><?php echo nl2br(esc_html($question_text)); ?></h2>
                         </div>
                         <div class="fof-question__answers row g-3" role="group" aria-label="<?php esc_attr_e('Kies waar of niet waar', 'feit-of-fabel-quiz'); ?>">
-                            <div class="col-sm-6">
+                            <?php $answer_col = $image_id ? 'col-sm-6 col-lg-12' : 'col-sm-6'; ?>
+                            <div class="<?php echo esc_attr($answer_col); ?>">
                                 <button type="button" class="fof-question__answer btn btn-success rounded-pill py-3 px-4 w-100 text-white" data-fof-answer="1" aria-pressed="false"><?php echo esc_html($settings['true_label']); ?></button>
                             </div>
-                            <div class="col-sm-6">
+                            <div class="<?php echo esc_attr($answer_col); ?>">
                                 <button type="button" class="fof-question__answer btn btn-danger rounded-pill py-3 px-4 w-100 text-white" data-fof-answer="0" aria-pressed="false"><?php echo esc_html($settings['false_label']); ?></button>
                             </div>
                         </div>
@@ -596,33 +636,31 @@ final class FOF_Quiz_Plugin {
                 </div>
 
                 <?php if ($with_feedback) : ?>
-                <div class="fof-question__feedback position-absolute top-0 start-0 w-100 h-100 z-2 overflow-hidden" data-fof-feedback hidden aria-live="polite" tabindex="-1">
-                    <div class="fof-question__feedback-scroll h-100 overflow-auto d-flex flex-column p-4 p-lg-5" data-fof-feedback-scroll>
-                        <div class="col-12 col-lg-10 mx-auto my-auto">
-                            <div class="fof-question__feedback-header d-flex align-items-center gap-3 pb-2">
-                                <span class="fof-question__feedback-icon d-flex align-items-center justify-content-center rounded-circle text-white fs-2 flex-shrink-0" data-fof-feedback-icon data-icon="check" aria-hidden="true">
-                                    <i class="bi bi-check-lg fof-icon fof-icon--feedback fof-icon--check" aria-hidden="true"></i>
-                                    <i class="bi bi-x-lg fof-icon fof-icon--feedback fof-icon--cross" aria-hidden="true"></i>
-                                </span>
-                                <p class="fof-question__feedback-title fs-3 fw-bold mb-0" data-fof-feedback-title></p>
-                            </div>
-                            <span class="btn rounded-pill fw-semibold py-2 px-3 d-inline-flex align-items-center text-white mb-4" data-fof-feedback-choice></span>
-                            <?php if ($explanation !== '') : ?>
-                                <div class="fof-question__explanation fs-5 lh-lg"><?php echo wp_kses_post($explanation); ?></div>
-                            <?php endif; ?>
+                <div class="fof-question__feedback d-flex flex-column p-4 p-lg-5" data-fof-feedback hidden aria-live="polite" tabindex="-1">
+                    <div class="col-12 col-lg-10 mx-auto my-auto">
+                        <div class="fof-question__feedback-header d-flex align-items-center gap-3">
+                            <span class="fof-question__feedback-icon d-flex align-items-center justify-content-center rounded-circle text-white fs-2 flex-shrink-0" data-fof-feedback-icon data-icon="check" aria-hidden="true">
+                                <i class="bi bi-check-lg fof-icon fof-icon--feedback fof-icon--check" aria-hidden="true"></i>
+                                <i class="bi bi-x-lg fof-icon fof-icon--feedback fof-icon--cross" aria-hidden="true"></i>
+                            </span>
+                            <p class="fof-question__feedback-title fs-3 fw-bold mb-0" data-fof-feedback-title></p>
                         </div>
-                        <div class="row justify-content-end flex-shrink-0 mt-4">
-                            <div class="col-12 col-sm-auto d-grid">
-                                <button type="button" class="btn btn-primary rounded-pill fw-bold py-2 px-4 d-inline-flex align-items-center justify-content-center gap-2" data-fof-next>
-                                    <span><?php echo esc_html($is_last ? $settings['finish_label'] : $settings['next_label']); ?></span>
-                                    <i class="bi bi-chevron-right" aria-hidden="true"></i>
-                                </button>
-                            </div>
+                        <div class="fof-question__feedback-statement rounded-4 px-4 py-3 mt-3 mb-4">
+                            <blockquote class="fs-5 lh-base mb-1"><?php echo nl2br(esc_html($question_text)); ?></blockquote>
+                            <div class="fof-question__feedback-choice" data-fof-feedback-choice></div>
+                        </div>
+                        <?php if ($explanation !== '') : ?>
+                            <div class="fof-question__explanation fs-5 lh-lg"><?php echo wp_kses_post($explanation); ?></div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="row justify-content-end flex-shrink-0 mt-4">
+                        <div class="col-12 col-sm-auto d-grid">
+                            <button type="button" class="btn btn-primary rounded-pill fw-bold py-2 px-4 d-inline-flex align-items-center justify-content-center gap-2" data-fof-next>
+                                <span><?php echo esc_html($is_last ? $settings['finish_label'] : $settings['next_label']); ?></span>
+                                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                            </button>
                         </div>
                     </div>
-                    <button type="button" class="fof-question__scroll-indicator btn btn-primary rounded-circle position-absolute bottom-0 start-50 translate-middle-x d-inline-flex align-items-center justify-content-center shadow mb-3" data-fof-feedback-scroll-indicator hidden aria-label="<?php esc_attr_e('Scroll omlaag', 'feit-of-fabel-quiz'); ?>">
-                        <i class="bi bi-chevron-down fs-5" aria-hidden="true"></i>
-                    </button>
                 </div>
                 <?php endif; ?>
             </div>
@@ -639,6 +677,8 @@ final class FOF_Quiz_Plugin {
             'next_label' => $this->field_or_default('fof_next_label', $quiz_id, 'Volgende vraag'),
             'finish_label' => $this->field_or_default('fof_finish_label', $quiz_id, 'Bekijk resultaat'),
             'result_heading' => $this->field_or_default('fof_result_heading', $quiz_id, 'Goed gedaan! 🎉'),
+            'result_heading_mid' => $this->field_or_default('fof_result_heading_mid', $quiz_id, 'Niet slecht!'),
+            'result_heading_low' => $this->field_or_default('fof_result_heading_low', $quiz_id, 'Daar valt nog wat te leren!'),
             'score_text' => $this->field_or_default('fof_score_text', $quiz_id, 'Je had {score} van de {total} vragen goed.'),
             'share_text' => $this->field_or_default('fof_share_text', $quiz_id, 'Ik had {score} van de {total} vragen goed bij {quiz}. Wat is jouw score?'),
         ];
