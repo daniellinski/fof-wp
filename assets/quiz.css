@@ -178,6 +178,11 @@
     display: none !important;
 }
 
+/* Static editor preview: clicks select the block instead of the buttons. */
+.fof-quiz-wrap.is-preview .fof-quiz {
+    pointer-events: none;
+}
+
 @keyframes fof-fade-in {
     from { opacity: 0; transform: translateY(0.5rem); }
     to { opacity: 1; transform: translateY(0); }

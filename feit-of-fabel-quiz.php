@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Feit of Fabel-Quiz
  * Description: Create ACF-managed Feit of Fabel-quizzes.
- * Version: 1.5.2
+ * Version: 1.5.3
  * Update URI: https://github.com/daniellinski/fof-wp
  * Author: Daniël Dols, Trimbos Instituut
  * Text Domain: feit-of-fabel-quiz
@@ -25,7 +25,7 @@ $fof_quiz_update_checker = PucFactory::buildUpdateChecker(
 $fof_quiz_update_checker->setBranch('main');
 
 final class FOF_Quiz_Plugin {
-    const VERSION = '1.5.2';
+    const VERSION = '1.5.3';
     const POST_TYPE = 'fof_quiz';
     const SHORTCODE = 'feit_of_fabel_quiz';
     const BLOCK_NAME = 'feit-of-fabel-quiz';
@@ -38,6 +38,7 @@ final class FOF_Quiz_Plugin {
         add_action('acf/init', [$this, 'register_acf']);
         add_action('wp_enqueue_scripts', [$this, 'register_assets']);
         add_action('enqueue_block_editor_assets', [$this, 'register_assets']);
+        add_action('enqueue_block_assets', [$this, 'enqueue_editor_canvas_style']);
         add_action('admin_notices', [$this, 'acf_admin_notice']);
 
         add_shortcode(self::SHORTCODE, [$this, 'shortcode']);
@@ -134,6 +135,22 @@ final class FOF_Quiz_Plugin {
 
         wp_enqueue_style('fof-quiz');
         wp_enqueue_script('fof-quiz');
+    }
+
+    /**
+     * The block editor renders in an iframe that only receives styles from
+     * enqueue_block_assets, so the quiz styles must be added there too.
+     */
+    public function enqueue_editor_canvas_style() {
+        if (!is_admin()) {
+            return;
+        }
+
+        if (!wp_style_is('fof-quiz', 'registered')) {
+            $this->register_assets();
+        }
+
+        wp_enqueue_style('fof-quiz');
     }
 
     public function register_acf() {
@@ -371,7 +388,7 @@ final class FOF_Quiz_Plugin {
             $classes[] = 'align' . sanitize_html_class($block['align']);
         }
 
-        echo $this->render_quiz($quiz_id, $show_intro, implode(' ', $classes)); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        echo $this->render_quiz($quiz_id, $show_intro, implode(' ', $classes), (bool) $is_preview); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     }
 
     public function shortcode($atts = []) {
@@ -397,7 +414,7 @@ final class FOF_Quiz_Plugin {
         return $this->render_quiz($quiz_id, $show_intro, $class);
     }
 
-    private function render_quiz($quiz_id, $show_intro = false, $wrapper_class = '') {
+    private function render_quiz($quiz_id, $show_intro = false, $wrapper_class = '', $is_preview = false) {
         if (!function_exists('get_field')) {
             return current_user_can('activate_plugins')
                 ? '<div class="alert alert-warning">' . esc_html__('Feit of Fabel Quiz vereist Advanced Custom Fields Pro.', 'feit-of-fabel-quiz') . '</div>'
@@ -422,12 +439,17 @@ final class FOF_Quiz_Plugin {
                 : '';
         }
 
+        $settings = $this->get_quiz_settings($quiz_id);
+
+        if ($is_preview || $this->is_editor_request()) {
+            return $this->render_preview($questions, $settings, $wrapper_class);
+        }
+
         $this->enqueue_assets();
         self::$instance_count++;
         $instance_id = 'fof-quiz-' . (int) $quiz_id . '-' . self::$instance_count;
         $title = get_the_title($quiz_id);
         $total = count($questions);
-        $settings = $this->get_quiz_settings($quiz_id);
         $wrapper_class = trim('fof-quiz-wrap my-5 ' . $wrapper_class);
 
         ob_start();
@@ -486,7 +508,42 @@ final class FOF_Quiz_Plugin {
         return apply_filters('fof_quiz_rendered_html', $html, $quiz_id, $settings);
     }
 
-    private function render_question($question, $index, $total, $settings) {
+    /**
+     * Whether the quiz is being rendered inside the block editor, e.g. a
+     * shortcode inside another ACF block's preview.
+     */
+    private function is_editor_request() {
+        if (wp_doing_ajax()) {
+            return isset($_REQUEST['action']) && $_REQUEST['action'] === 'acf/ajax/fetch-block'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        }
+
+        if (defined('REST_REQUEST') && REST_REQUEST) {
+            return isset($_REQUEST['context']) && $_REQUEST['context'] === 'edit'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        }
+
+        return is_admin();
+    }
+
+    /**
+     * Static, non-interactive first question shown in the block editor.
+     */
+    private function render_preview($questions, $settings, $wrapper_class = '') {
+        wp_enqueue_style('fof-quiz');
+
+        $wrapper_class = trim('fof-quiz-wrap is-preview my-5 ' . $wrapper_class);
+
+        ob_start();
+        ?>
+        <div class="<?php echo esc_attr($wrapper_class); ?>">
+            <div class="fof-quiz mx-auto">
+                <?php echo $this->render_question(reset($questions), 0, count($questions), $settings, false); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+            </div>
+        </div>
+        <?php
+        return (string) ob_get_clean();
+    }
+
+    private function render_question($question, $index, $total, $settings, $with_feedback = true) {
         $question_text = isset($question['question']) ? trim((string) $question['question']) : '';
         if ($question_text === '') {
             return '';
@@ -538,6 +595,7 @@ final class FOF_Quiz_Plugin {
                     </div>
                 </div>
 
+                <?php if ($with_feedback) : ?>
                 <div class="fof-question__feedback position-absolute top-0 start-0 w-100 h-100 z-2 overflow-hidden" data-fof-feedback hidden aria-live="polite" tabindex="-1">
                     <div class="fof-question__feedback-scroll h-100 overflow-auto d-flex flex-column p-4 p-lg-5" data-fof-feedback-scroll>
                         <div class="col-12 col-lg-10 mx-auto my-auto">
@@ -566,6 +624,7 @@ final class FOF_Quiz_Plugin {
                         <i class="bi bi-chevron-down fs-5" aria-hidden="true"></i>
                     </button>
                 </div>
+                <?php endif; ?>
             </div>
         </article>
         <?php
