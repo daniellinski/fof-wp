@@ -638,15 +638,15 @@ final class FOF_Quiz_Plugin {
                 <?php if ($with_feedback) : ?>
                 <div class="fof-question__feedback d-flex flex-column p-4 p-lg-5" data-fof-feedback hidden aria-live="polite" tabindex="-1">
                     <div class="col-12 col-lg-10 mx-auto my-auto">
-                        <div class="fof-question__feedback-header d-flex align-items-center gap-3">
+                        <div class="fof-question__feedback-header d-flex align-items-center">
                             <span class="fof-question__feedback-icon d-flex align-items-center justify-content-center rounded-circle text-white fs-2 flex-shrink-0" data-fof-feedback-icon data-icon="check" aria-hidden="true">
                                 <i class="bi bi-check-lg fof-icon fof-icon--feedback fof-icon--check" aria-hidden="true"></i>
                                 <i class="bi bi-x-lg fof-icon fof-icon--feedback fof-icon--cross" aria-hidden="true"></i>
                             </span>
-                            <p class="fof-question__feedback-title fs-3 fw-bold mb-0" data-fof-feedback-title></p>
+                            <p class="fof-question__feedback-title fw-bold lh-sm mb-0" data-fof-feedback-title></p>
                         </div>
-                        <div class="fof-question__feedback-statement rounded-4 px-4 py-3 mt-3 mb-4">
-                            <blockquote class="fs-5 lh-base mb-1"><?php echo nl2br(esc_html($question_text)); ?></blockquote>
+                        <div class="fof-question__feedback-statement rounded-4 px-4 py-3">
+                            <blockquote class="fs-5 lh-base mb-2"><?php echo nl2br(esc_html($question_text)); ?></blockquote>
                             <div class="fof-question__feedback-choice" data-fof-feedback-choice></div>
                         </div>
                         <?php if ($explanation !== '') : ?>

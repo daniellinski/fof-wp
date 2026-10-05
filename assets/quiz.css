@@ -114,8 +114,24 @@
     background-color: var(--fof-fabel-light);
 }
 
+/* Extra room above the verdict; overrides the p-4/p-lg-5 utilities on the feedback. */
+.fof-quiz .fof-question__feedback {
+    padding-top: 2.5rem !important;
+}
+
+@media (min-width: 992px) {
+    .fof-quiz .fof-question__feedback {
+        padding-top: 3.5rem !important;
+    }
+}
+
+.fof-question__feedback-header {
+    gap: 1.25rem;
+}
+
 .fof-question__feedback-statement {
     background-color: rgba(255, 255, 255, 0.65);
+    margin: 2rem 0;
 }
 
 .fof-question__feedback-statement blockquote {
@@ -176,9 +192,16 @@
     color: var(--fof-feit) !important;
 }
 
-/* Themes may force paragraph margins with !important; keep the title centred on the icon. */
-.fof-quiz .fof-question__feedback-title {
+/* Themes may force paragraph margins and sizes with !important; keep the title prominent and centred on the icon. */
+:is(#body, html) .fof-quiz .fof-question__feedback-title {
+    font-size: 1.75rem !important;
     margin: 0 !important;
+}
+
+@media (max-width: 575.98px) {
+    :is(#body, html) .fof-quiz .fof-question__feedback-title {
+        font-size: 1.5rem !important;
+    }
 }
 
 .fof-question.is-incorrect .fof-question__feedback-title {
