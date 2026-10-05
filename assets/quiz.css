@@ -93,24 +93,23 @@
 .fof-icon {
     display: block;
     flex: 0 0 auto;
+    line-height: 1;
+}
+
+.fof-icon::before {
+    display: block;
+    vertical-align: 0;
 }
 
 .fof-icon--share {
-    height: 1.25em;
-    width: 1.25em;
+    font-size: 1.25em;
 }
 
 .fof-icon--feedback {
-    fill: none;
-    height: 2rem;
-    stroke: currentColor;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    stroke-width: 2;
-    width: 2rem;
+    font-size: 2rem;
 }
 
-.fof-icon--cross {
+.fof-question__feedback-icon .fof-icon--cross {
     display: none;
 }
 
@@ -137,7 +136,11 @@
 }
 
 .fof-question__scroll-indicator {
+    --bs-btn-padding-x: 0;
+    --bs-btn-padding-y: 0;
+    aspect-ratio: 1;
     height: 3rem;
+    min-height: 0 !important; /* Themes may set a min-height on .btn. */
     width: 3rem;
     z-index: 3;
 }
@@ -154,6 +157,12 @@
 
 .fof-question__scroll-indicator .bi {
     animation: fof-scroll-hint 1.4s ease-in-out infinite;
+    line-height: 1;
+}
+
+.fof-question__scroll-indicator .bi::before {
+    display: block;
+    vertical-align: 0;
 }
 
 .fof-question.is-active,

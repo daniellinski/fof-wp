@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Feit of Fabel-Quiz
  * Description: Create ACF-managed Feit of Fabel-quizzes.
- * Version: 1.5.1
+ * Version: 1.5.2
  * Update URI: https://github.com/daniellinski/fof-wp
  * Author: Daniël Dols, Trimbos Instituut
  * Text Domain: feit-of-fabel-quiz
@@ -25,7 +25,7 @@ $fof_quiz_update_checker = PucFactory::buildUpdateChecker(
 $fof_quiz_update_checker->setBranch('main');
 
 final class FOF_Quiz_Plugin {
-    const VERSION = '1.5.1';
+    const VERSION = '1.5.2';
     const POST_TYPE = 'fof_quiz';
     const SHORTCODE = 'feit_of_fabel_quiz';
     const BLOCK_NAME = 'feit-of-fabel-quiz';
@@ -465,13 +465,13 @@ final class FOF_Quiz_Plugin {
                         <div class="row g-3 justify-content-center">
                             <div class="col-sm-5 d-grid">
                                 <button type="button" class="btn btn-primary rounded-pill fw-bold py-3 px-4 d-inline-flex align-items-center justify-content-center gap-2 text-white" data-fof-share="facebook" aria-label="<?php esc_attr_e('Deel je resultaat op Facebook', 'feit-of-fabel-quiz'); ?>">
-                                    <svg class="fof-icon fof-icon--share" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M13.5 21v-8h2.7l.4-3h-3.1V8.1c0-.9.3-1.5 1.6-1.5h1.7V4a22 22 0 0 0-2.5-.1c-2.5 0-4.2 1.5-4.2 4.3V10H7.3v3h2.8v8h3.4Z"/></svg>
+                                    <i class="bi bi-facebook fof-icon fof-icon--share" aria-hidden="true"></i>
                                     <span>Facebook</span>
                                 </button>
                             </div>
                             <div class="col-sm-5 d-grid">
                                 <button type="button" class="btn btn-primary rounded-pill fw-bold py-3 px-4 d-inline-flex align-items-center justify-content-center gap-2 text-white" data-fof-share="x" aria-label="<?php esc_attr_e('Deel je resultaat op X', 'feit-of-fabel-quiz'); ?>">
-                                    <svg class="fof-icon fof-icon--share" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M18.9 2H22l-6.8 7.8L23.2 22h-6.3l-4.9-6.4L6.4 22H3.3l7.3-8.4L2.2 2h6.4l4.4 5.8L18.9 2Zm-1.1 17.6h1.7L7.7 4.3H5.9l11.9 15.3Z"/></svg>
+                                    <i class="bi bi-twitter-x fof-icon fof-icon--share" aria-hidden="true"></i>
                                     <span>X</span>
                                 </button>
                             </div>
@@ -543,8 +543,8 @@ final class FOF_Quiz_Plugin {
                         <div class="col-12 col-lg-10 mx-auto my-auto">
                             <div class="fof-question__feedback-header d-flex align-items-center gap-3 pb-2">
                                 <span class="fof-question__feedback-icon d-flex align-items-center justify-content-center rounded-circle text-white fs-2 flex-shrink-0" data-fof-feedback-icon data-icon="check" aria-hidden="true">
-                                    <svg class="fof-icon fof-icon--feedback fof-icon--check" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
-                                    <svg class="fof-icon fof-icon--feedback fof-icon--cross" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg>
+                                    <i class="bi bi-check-lg fof-icon fof-icon--feedback fof-icon--check" aria-hidden="true"></i>
+                                    <i class="bi bi-x-lg fof-icon fof-icon--feedback fof-icon--cross" aria-hidden="true"></i>
                                 </span>
                                 <p class="fof-question__feedback-title fs-3 fw-bold mb-0" data-fof-feedback-title></p>
                             </div>
