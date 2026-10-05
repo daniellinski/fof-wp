@@ -20,6 +20,16 @@
         }, text || '');
     }
 
+    function fillAnswer(node, text, answer) {
+        var parts = text.split('{answer}');
+        var answerNode = document.createElement('strong');
+        answerNode.textContent = answer;
+        node.textContent = '';
+        node.appendChild(document.createTextNode(parts[0] || ''));
+        node.appendChild(answerNode);
+        node.appendChild(document.createTextNode(parts.slice(1).join('{answer}')));
+    }
+
     function Quiz(root) {
         this.root = root;
         this.questions = Array.prototype.slice.call(root.querySelectorAll('[data-fof-question]'));
@@ -133,14 +143,7 @@
             });
         }
         if (feedbackChoice) {
-            // "Jij koos: <strong>Waar</strong>", built as nodes so labels stay plain text.
-            var parts = i18n.youChose.split('{answer}');
-            var answerNode = document.createElement('strong');
-            answerNode.textContent = selected.textContent.trim();
-            feedbackChoice.textContent = '';
-            feedbackChoice.appendChild(document.createTextNode(parts[0] || ''));
-            feedbackChoice.appendChild(answerNode);
-            feedbackChoice.appendChild(document.createTextNode(parts.slice(1).join('{answer}')));
+            fillAnswer(feedbackChoice, i18n.youChose, selected.textContent.trim());
         }
         if (feedback) {
             // The feedback replaces the question in the card; keep at least the
@@ -221,7 +224,7 @@
         list.textContent = '';
         this.answers.forEach(function (answer) {
             var item = document.createElement('li');
-            item.className = 'fof-review__item d-flex gap-3 py-3' + (answer.isCorrect ? ' is-correct' : ' is-incorrect');
+            item.className = 'fof-review__item d-flex align-items-start gap-3 rounded-4' + (answer.isCorrect ? ' is-correct' : ' is-incorrect');
 
             var icon = document.createElement('span');
             icon.className = 'fof-review__icon d-flex align-items-center justify-content-center rounded-circle text-white flex-shrink-0';
@@ -231,13 +234,14 @@
             status.className = 'visually-hidden';
             status.textContent = (answer.isCorrect ? i18n.answeredCorrectly : i18n.answeredIncorrectly) + ': ';
 
+            // Divs rather than paragraphs: themes may force large paragraph margins.
             var text = document.createElement('div');
-            var statement = document.createElement('p');
-            statement.className = 'fw-semibold mb-1';
+            var statement = document.createElement('div');
+            statement.className = 'fof-review__statement fw-semibold';
             statement.textContent = answer.statement;
-            var correct = document.createElement('p');
-            correct.className = 'fof-review__answer mb-0';
-            correct.textContent = template(i18n.correctAnswer, { answer: answer.correctLabel });
+            var correct = document.createElement('div');
+            correct.className = 'fof-review__answer mt-1';
+            fillAnswer(correct, i18n.correctAnswer, answer.correctLabel);
             text.appendChild(status);
             text.appendChild(statement);
             text.appendChild(correct);
