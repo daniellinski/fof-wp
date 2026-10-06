@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Feit of Fabel-Quiz
  * Description: Create ACF-managed Feit of Fabel-quizzes.
- * Version: 1.6.0
+ * Version: 1.6.1
  * Update URI: https://github.com/daniellinski/fof-wp
  * Author: Daniël Dols, Trimbos Instituut
  * Text Domain: feit-of-fabel-quiz
@@ -25,7 +25,7 @@ $fof_quiz_update_checker = PucFactory::buildUpdateChecker(
 $fof_quiz_update_checker->setBranch('main');
 
 final class FOF_Quiz_Plugin {
-    const VERSION = '1.6.0';
+    const VERSION = '1.6.1';
     const POST_TYPE = 'fof_quiz';
     const SHORTCODE = 'feit_of_fabel_quiz';
     const BLOCK_NAME = 'feit-of-fabel-quiz';
@@ -40,6 +40,10 @@ final class FOF_Quiz_Plugin {
         add_action('enqueue_block_editor_assets', [$this, 'register_assets']);
         add_action('enqueue_block_assets', [$this, 'enqueue_editor_canvas_style']);
         add_action('admin_notices', [$this, 'acf_admin_notice']);
+        add_action('init', [$this, 'purge_caches_after_update'], 20);
+
+        add_filter('rocket_exclude_js', [$this, 'exclude_script_from_optimization']);
+        add_filter('rocket_exclude_css', [$this, 'exclude_style_from_optimization']);
 
         add_shortcode(self::SHORTCODE, [$this, 'shortcode']);
 
@@ -135,6 +139,42 @@ final class FOF_Quiz_Plugin {
                 wp_enqueue_style('fof-quiz');
                 wp_enqueue_script('fof-quiz');
             }
+        }
+    }
+
+    /**
+     * WP Rocket keeps serving its minified copy of a file after the original
+     * changes, which would bypass the filemtime-based asset versions above.
+     */
+    public function exclude_script_from_optimization($excluded) {
+        $excluded[] = wp_parse_url(plugins_url('assets/quiz.js', __FILE__), PHP_URL_PATH);
+
+        return $excluded;
+    }
+
+    public function exclude_style_from_optimization($excluded) {
+        $excluded[] = wp_parse_url(plugins_url('assets/quiz.css', __FILE__), PHP_URL_PATH);
+
+        return $excluded;
+    }
+
+    /**
+     * Cached pages still reference the previous asset URLs, so clear the page
+     * and minify caches once whenever a new plugin version is running.
+     */
+    public function purge_caches_after_update() {
+        if (get_option('fof_quiz_version') === self::VERSION) {
+            return;
+        }
+
+        update_option('fof_quiz_version', self::VERSION);
+
+        if (function_exists('rocket_clean_minify')) {
+            rocket_clean_minify();
+        }
+
+        if (function_exists('rocket_clean_domain')) {
+            rocket_clean_domain();
         }
     }
 
