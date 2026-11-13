@@ -265,6 +265,8 @@
             shareUrl = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(pageUrl) + '&quote=' + encodeURIComponent(text);
         } else if (platform === 'x') {
             shareUrl = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(pageUrl);
+        } else if (platform === 'whatsapp') {
+            shareUrl = 'https://wa.me/?text=' + encodeURIComponent(text + ' ' + pageUrl);
         }
 
         this.emit('share_button_clicked', this.details({

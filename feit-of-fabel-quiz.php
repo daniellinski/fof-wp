@@ -561,16 +561,22 @@ final class FOF_Quiz_Plugin {
                         </details>
                         <p class="fs-5 fw-semibold lh-base mb-3"><?php esc_html_e('Deel je resultaat', 'feit-of-fabel-quiz'); ?></p>
                         <div class="row g-3 justify-content-center">
-                            <div class="col-sm-5 d-grid">
+                            <div class="col-sm-4 d-grid">
                                 <button type="button" class="btn btn-primary rounded-pill fw-bold py-3 px-4 d-inline-flex align-items-center justify-content-center gap-2 text-white" data-fof-share="facebook" aria-label="<?php esc_attr_e('Deel je resultaat op Facebook', 'feit-of-fabel-quiz'); ?>">
                                     <i class="bi bi-facebook fof-icon fof-icon--share" aria-hidden="true"></i>
                                     <span>Facebook</span>
                                 </button>
                             </div>
-                            <div class="col-sm-5 d-grid">
+                            <div class="col-sm-4 d-grid">
                                 <button type="button" class="btn btn-primary rounded-pill fw-bold py-3 px-4 d-inline-flex align-items-center justify-content-center gap-2 text-white" data-fof-share="x" aria-label="<?php esc_attr_e('Deel je resultaat op X', 'feit-of-fabel-quiz'); ?>">
                                     <i class="bi bi-twitter-x fof-icon fof-icon--share" aria-hidden="true"></i>
                                     <span>X</span>
+                                </button>
+                            </div>
+                            <div class="col-sm-4 d-grid">
+                                <button type="button" class="btn btn-primary rounded-pill fw-bold py-3 px-4 d-inline-flex align-items-center justify-content-center gap-2 text-white" data-fof-share="whatsapp" aria-label="<?php esc_attr_e('Deel je resultaat via WhatsApp', 'feit-of-fabel-quiz'); ?>">
+                                    <i class="bi bi-whatsapp fof-icon fof-icon--share" aria-hidden="true"></i>
+                                    <span>WhatsApp</span>
                                 </button>
                             </div>
                         </div>
