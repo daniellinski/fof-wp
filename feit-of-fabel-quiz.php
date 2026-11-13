@@ -117,8 +117,8 @@ final class FOF_Quiz_Plugin {
         wp_localize_script('fof-quiz', 'fofQuizSettings', [
             'dataLayer' => (bool) apply_filters('fof_quiz_enable_data_layer', false),
             'i18n' => [
-                'correctTitle' => __('Goed! {verdict}', 'feit-of-fabel-quiz'),
-                'incorrectTitle' => __('Helaas! {verdict}', 'feit-of-fabel-quiz'),
+                'correctTitle' => __('Je antwoord is goed', 'feit-of-fabel-quiz'),
+                'incorrectTitle' => __('Je antwoord is fout', 'feit-of-fabel-quiz'),
                 'verdictTrue' => __('Dit is waar.', 'feit-of-fabel-quiz'),
                 'verdictFalse' => __('Dit is niet waar.', 'feit-of-fabel-quiz'),
                 'youChose' => __('Jij koos: {answer}', 'feit-of-fabel-quiz'),

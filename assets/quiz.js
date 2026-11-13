@@ -4,8 +4,8 @@
     var initialized = new WeakSet();
     var settings = window.fofQuizSettings || {};
     var i18n = Object.assign({
-        correctTitle: 'Goed! {verdict}',
-        incorrectTitle: 'Helaas! {verdict}',
+        correctTitle: 'Je antwoord is goed',
+        incorrectTitle: 'Je antwoord is fout',
         verdictTrue: 'Dit is waar.',
         verdictFalse: 'Dit is niet waar.',
         youChose: 'Jij koos: {answer}',
